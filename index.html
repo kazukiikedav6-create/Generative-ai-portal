@@ -13,12 +13,13 @@
             --border-color: #e1dfdd;
             --text-main: #323130;
             --text-sub: #605e5c;
+            --star-color: #ffb900;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', 'Helvetica Neue', sans-serif; }
         body { display: flex; height: 100vh; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; }
 
-        /* 左サイドバー（幅狭 180px） */
+        /* 左サイドバー（幅狭 200px） */
         .sidebar { width: 200px; background-color: var(--sidebar-bg); color: #abb2bf; padding: 12px 8px; display: flex; flex-direction: column; gap: 15px; font-size: 12px; flex-shrink: 0; overflow-y: auto; }
         .sidebar-title { color: #fff; font-weight: bold; font-size: 13px; padding: 4px 6px; display: flex; align-items: center; gap: 6px; }
         .sidebar-section { display: flex; flex-direction: column; gap: 2px; }
@@ -70,6 +71,7 @@
         .agent-card-title { font-size: 13.5px; font-weight: bold; margin-bottom: 4px; }
         .agent-card-desc { font-size: 11px; color: var(--text-sub); line-height: 1.4; }
         .agent-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3f2f1; }
+        .agent-rating-badge { font-size: 11px; color: var(--star-color); font-weight: 500; }
         .btn-use { background: var(--primary-color); color: white; border: none; padding: 5px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; }
 
         /* ピン留め件数0のメッセージ */
@@ -97,6 +99,11 @@
         .btn-send { background: var(--primary-color); color: white; border: none; padding: 0 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
 
         .feedback-box { padding: 12px 15px; border-top: 1px solid var(--border-color); background: #faf9f8; font-size: 11px; }
+        .star-rating-input { display: flex; gap: 4px; margin-top: 6px; }
+        .star-rating-input span { font-size: 18px; color: #ccc; cursor: pointer; transition: color 0.2s; }
+        .star-rating-input span:hover,
+        .star-rating-input span:hover ~ span { color: #ccc; }
+        .star-rating-input:hover span { color: var(--star-color); }
     </style>
 </head>
 <body>
@@ -195,7 +202,7 @@
                             <div class="agent-card-desc">LC・船積書類PDFのOCRデータとSWIFT項目を照合し、判定結果を出力。</div>
                         </div>
                         <div class="agent-card-footer">
-                            <span style="font-size:11px; color:#ffb900;">★ 4.9 (18)</span>
+                            <span class="agent-rating-badge" id="rating-nyuuryoku_totsugou">★ -- (-)</span>
                             <button class="btn-use" onclick="selectAgent('nyuuryoku_totsugou')">使う</button>
                         </div>
                     </div>
@@ -211,7 +218,7 @@
                             <div class="agent-card-desc">雑談・調べ物・アイデア出し等、業務時短・効率化の隙間を埋める汎用AI。</div>
                         </div>
                         <div class="agent-card-footer">
-                            <span style="font-size:11px; color:#ffb900;">★ 4.7 (22)</span>
+                            <span class="agent-rating-badge" id="rating-general">★ -- (-)</span>
                             <button class="btn-use" onclick="selectAgent('general')">使う</button>
                         </div>
                     </div>
@@ -227,7 +234,7 @@
                             <div class="agent-card-desc">角が立たないフォーマル英文の作成。海外取引先との信頼確保。</div>
                         </div>
                         <div class="agent-card-footer">
-                            <span style="font-size:11px; color:#ffb900;">★ 4.5 (12)</span>
+                            <span class="agent-rating-badge" id="rating-english_mail">★ -- (-)</span>
                             <button class="btn-use" onclick="selectAgent('english_mail')">使う</button>
                         </div>
                     </div>
@@ -243,7 +250,7 @@
                             <div class="agent-card-desc">背景・リスクを社内向けに自然な文体へ整える精緻化エージェント。</div>
                         </div>
                         <div class="agent-card-footer">
-                            <span style="font-size:11px; color:#ffb900;">★ 4.3 (9)</span>
+                            <span class="agent-rating-badge" id="rating-doc_polish">★ -- (-)</span>
                             <button class="btn-use" onclick="selectAgent('doc_polish')">使う</button>
                         </div>
                     </div>
@@ -259,7 +266,7 @@
                             <div class="agent-card-desc">COUNTIFS / FILTER / TEXTJOIN など目的に適合した関数構成を提示。</div>
                         </div>
                         <div class="agent-card-footer">
-                            <span style="font-size:11px; color:#ffb900;">★ 4.8 (8)</span>
+                            <span class="agent-rating-badge" id="rating-excel_formula">★ -- (-)</span>
                             <button class="btn-use" onclick="selectAgent('excel_formula')">使う</button>
                         </div>
                     </div>
@@ -275,7 +282,7 @@
                             <div class="agent-card-desc">FX権限・送金手数料・口座管理など、社内規定の参照を高速化。</div>
                         </div>
                         <div class="agent-card-footer">
-                            <span style="font-size:11px; color:#ffb900;">★ 4.0 (4)</span>
+                            <span class="agent-rating-badge" id="rating-finance_faq">★ -- (-)</span>
                             <button class="btn-use" onclick="selectAgent('finance_faq')">使う</button>
                         </div>
                     </div>
@@ -309,8 +316,15 @@
                 </div>
 
                 <div class="feedback-box">
-                    <h4 style="font-size:12px; margin-bottom:2px;">💬 利用者フィードバック</h4>
-                    <p style="color: #605e5c;">使ってみた感想や改善要望を投稿...</p>
+                    <h4 style="font-size:12px; margin-bottom:2px;">💬 このエージェントを評価</h4>
+                    <p style="color: #605e5c; font-size: 10.5px;">星をクリックして評価を送信できます：</p>
+                    <div class="star-rating-input">
+                        <span onclick="submitRating(1)" title="1点">★</span>
+                        <span onclick="submitRating(2)" title="2点">★</span>
+                        <span onclick="submitRating(3)" title="3点">★</span>
+                        <span onclick="submitRating(4)" title="4点">★</span>
+                        <span onclick="submitRating(5)" title="5点">★</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -399,6 +413,58 @@
                 emptyMsg.style.display = 'block';
             } else {
                 emptyMsg.style.display = 'none';
+            }
+        }
+
+        // --- 全エージェントの評価データをDBから取得して画面表示を更新 ---
+        async function loadRatings() {
+            try {
+                const response = await fetch('/api/ratings');
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                Object.keys(agentMap).forEach(key => {
+                    const badge = document.getElementById(`rating-${key}`);
+                    if (badge) {
+                        if (data[key]) {
+                            badge.innerText = `★ ${data[key].average} (${data[key].count})`;
+                        } else {
+                            badge.innerText = `★ 0.0 (0)`;
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('[RATING ERROR] 評価データの取得に失敗しました:', err);
+            }
+        }
+
+        // --- 選択中のエージェントに評価を送信 ---
+        async function submitRating(ratingValue) {
+            if (!currentAgentKey) {
+                alert("エージェントを選択した状態で評価を行ってください。");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/ratings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        agentId: currentAgentKey,
+                        rating: ratingValue
+                    })
+                });
+
+                if (response.ok) {
+                    alert(`★${ratingValue} の評価を送信しました！ありがとうございます。`);
+                    loadRatings(); // 画面の評価数を即時更新
+                } else {
+                    alert("評価の送信に失敗しました。");
+                }
+            } catch (err) {
+                console.error('[RATING SUBMIT ERROR]', err);
+                alert("通信エラーが発生しました。");
             }
         }
 
@@ -511,6 +577,7 @@
 
         window.onload = function() {
             renderCards();
+            loadRatings(); // 画面ロード時に自動でDBから評価件数と平均点を読み込む
         };
     </script>
 </body>
