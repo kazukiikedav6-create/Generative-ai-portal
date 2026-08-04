@@ -19,7 +19,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', 'Helvetica Neue', sans-serif; }
         body { display: flex; height: 100vh; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; }
 
-        /* 左サイドバー（幅狭 200px） */
+        /* 左サイドバー（幅狭 180px） */
         .sidebar { width: 200px; background-color: var(--sidebar-bg); color: #abb2bf; padding: 12px 8px; display: flex; flex-direction: column; gap: 15px; font-size: 12px; flex-shrink: 0; overflow-y: auto; }
         .sidebar-title { color: #fff; font-weight: bold; font-size: 13px; padding: 4px 6px; display: flex; align-items: center; gap: 6px; }
         .sidebar-section { display: flex; flex-direction: column; gap: 2px; }
@@ -98,12 +98,16 @@
         .chat-input-area input { flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; font-size: 12px; }
         .btn-send { background: var(--primary-color); color: white; border: none; padding: 0 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
 
+        /* 評価＆改善要望フィードバックエリア */
         .feedback-box { padding: 12px 15px; border-top: 1px solid var(--border-color); background: #faf9f8; font-size: 11px; }
-        .star-rating-input { display: flex; gap: 4px; margin-top: 6px; }
-        .star-rating-input span { font-size: 18px; color: #ccc; cursor: pointer; transition: color 0.2s; }
-        .star-rating-input span:hover,
-        .star-rating-input span:hover ~ span { color: #ccc; }
-        .star-rating-input:hover span { color: var(--star-color); }
+        .star-rating-input { display: flex; gap: 6px; margin: 4px 0; }
+        .star-rating-input span { font-size: 18px; color: #ccc; cursor: pointer; transition: color 0.15s; }
+        .star-rating-input span:hover { color: var(--star-color); }
+        .feedback-textarea { width: 100%; height: 48px; margin-top: 6px; padding: 6px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 4px; resize: none; outline: none; font-family: inherit; }
+        .feedback-textarea:focus { border-color: var(--primary-color); }
+        .btn-submit-feedback { width: 100%; margin-top: 6px; padding: 6px; background: var(--primary-color); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .btn-submit-feedback:hover { background-color: #005a9e; }
+        .feedback-done-msg { display: none; color: #137333; font-size: 11px; margin-top: 4px; background: #e6f4ea; padding: 8px; border-radius: 4px; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -315,15 +319,25 @@
                     </div>
                 </div>
 
+                <!-- 評価＆改善要望エリア -->
                 <div class="feedback-box">
-                    <h4 style="font-size:12px; margin-bottom:2px;">💬 このエージェントを評価</h4>
-                    <p style="color: #605e5c; font-size: 10.5px;">星をクリックして評価を送信できます：</p>
-                    <div class="star-rating-input">
-                        <span onclick="submitRating(1)" title="1点">★</span>
-                        <span onclick="submitRating(2)" title="2点">★</span>
-                        <span onclick="submitRating(3)" title="3点">★</span>
-                        <span onclick="submitRating(4)" title="4点">★</span>
-                        <span onclick="submitRating(5)" title="5点">★</span>
+                    <h4 style="font-size:12px; margin-bottom:2px;">💬 評価・改善要望</h4>
+                    
+                    <div id="rating-form-area">
+                        <p style="color: #605e5c; font-size: 10.5px;">星を選択してください（1人1回）：</p>
+                        <div class="star-rating-input" id="star-input-group">
+                            <span onclick="setRating(1)">★</span>
+                            <span onclick="setRating(2)">★</span>
+                            <span onclick="setRating(3)">★</span>
+                            <span onclick="setRating(4)">★</span>
+                            <span onclick="setRating(5)">★</span>
+                        </div>
+                        <textarea id="feedback-comment" class="feedback-textarea" placeholder="改善要望やメッセージがあれば入力してください（任意）"></textarea>
+                        <button class="btn-submit-feedback" onclick="submitRatingAndFeedback()">送信する</button>
+                    </div>
+
+                    <div id="rating-done-area" class="feedback-done-msg">
+                        ✅ このエージェントは評価済みです。ご協力ありがとうございました！
                     </div>
                 </div>
             </div>
@@ -347,6 +361,7 @@
         let currentAgentKey = null;
         let currentPage = 'home';
         let pinnedKeys = JSON.parse(localStorage.getItem('pinned_agents') || '["nyuuryoku_totsugou"]');
+        let selectedRatingValue = 0;
 
         function switchPage(page) {
             currentPage = page;
@@ -439,12 +454,46 @@
             }
         }
 
-        // --- 選択中のエージェントに評価を送信 ---
-        async function submitRating(ratingValue) {
-            if (!currentAgentKey) {
-                alert("エージェントを選択した状態で評価を行ってください。");
+        // --- 星の選択表示コントロール ---
+        function setRating(val) {
+            selectedRatingValue = val;
+            const stars = document.querySelectorAll('#star-input-group span');
+            stars.forEach((star, index) => {
+                if (index < val) {
+                    star.style.color = 'var(--star-color)';
+                } else {
+                    star.style.color = '#ccc';
+                }
+            });
+        }
+
+        // --- ユーザーの評価済み状態をチェック ---
+        function checkUserRatingState(agentId) {
+            const hasRated = localStorage.getItem(`rated_${agentId}`);
+            const formArea = document.getElementById('rating-form-area');
+            const doneArea = document.getElementById('rating-done-area');
+
+            if (hasRated) {
+                formArea.style.display = 'none';
+                doneArea.style.display = 'block';
+            } else {
+                formArea.style.display = 'block';
+                doneArea.style.display = 'none';
+                setRating(0);
+                document.getElementById('feedback-comment').value = '';
+            }
+        }
+
+        // --- 評価と改善要望の送信処理 ---
+        async function submitRatingAndFeedback() {
+            if (!currentAgentKey) return;
+            
+            if (selectedRatingValue === 0) {
+                alert("星（1〜5）を選択してください。");
                 return;
             }
+
+            const commentText = document.getElementById('feedback-comment').value.trim();
 
             try {
                 const response = await fetch('/api/ratings', {
@@ -452,18 +501,23 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         agentId: currentAgentKey,
-                        rating: ratingValue
+                        rating: selectedRatingValue,
+                        comment: commentText
                     })
                 });
 
                 if (response.ok) {
-                    alert(`★${ratingValue} の評価を送信しました！ありがとうございます。`);
-                    loadRatings(); // 画面の評価数を即時更新
+                    // 評価済みフラグを端末に記憶（1人1回制限）
+                    localStorage.setItem(`rated_${currentAgentKey}`, selectedRatingValue);
+                    
+                    // 画面の更新
+                    checkUserRatingState(currentAgentKey);
+                    loadRatings(); 
                 } else {
-                    alert("評価の送信に失敗しました。");
+                    alert("送信に失敗しました。");
                 }
             } catch (err) {
-                console.error('[RATING SUBMIT ERROR]', err);
+                console.error('[SUBMIT ERROR]', err);
                 alert("通信エラーが発生しました。");
             }
         }
@@ -478,6 +532,9 @@
             chatPanel.style.display = 'flex';
 
             document.getElementById('current-agent-title').innerText = agent.name;
+
+            // 評価済みチェック
+            checkUserRatingState(key);
 
             const iframe = document.getElementById('copilot-iframe');
             const placeholder = document.getElementById('mock-placeholder');
@@ -510,7 +567,7 @@
                 }
             });
 
-            // ★ Azure (Cosmos DB) へ利用ログを直接送信
+            // ★ Azure (Cosmos DB) へ利用ログを送信
             logUsage(key, agent.name);
         }
 
@@ -577,7 +634,7 @@
 
         window.onload = function() {
             renderCards();
-            loadRatings(); // 画面ロード時に自動でDBから評価件数と平均点を読み込む
+            loadRatings();
         };
     </script>
 </body>
