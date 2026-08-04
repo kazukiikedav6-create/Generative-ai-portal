@@ -46,37 +46,48 @@ module.exports = async function (context, req) {
             };
         }
 
-        // --- POST: 評価（1〜5）と改善要望メッセージを保存 ---
+        // --- POST: 評価（1〜5）または改善要望コメントを保存 ---
         if (req.method === "POST") {
             const { agentId, rating, comment } = req.body || {};
             
-            if (!agentId || !rating || rating < 1 || rating > 5) {
+            if (!agentId) {
                 return {
                     status: 400,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ error: "Invalid agentId or rating (must be 1-5)" })
+                    body: JSON.stringify({ error: "agentId is required" })
                 };
             }
 
-            const ratingDoc = {
-                id: "rating-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 7),
-                type: "rating",
+            if (!rating && !comment) {
+                return {
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ error: "Either rating or comment is required" })
+                };
+            }
+
+            const isRating = rating && Number(rating) >= 1 && Number(rating) <= 5;
+            const docType = isRating ? "rating" : "comment";
+
+            const doc = {
+                id: docType + "-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 7),
+                type: docType,
                 agentId: agentId,
-                rating: Number(rating),
-                comment: comment || "", // 改善要望コメントを保存
+                rating: isRating ? Number(rating) : undefined,
+                comment: comment || "",
                 timestamp: new Date().toISOString()
             };
 
-            await container.items.create(ratingDoc);
+            await container.items.create(doc);
 
             return {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: "Rating and feedback saved successfully" })
+                body: JSON.stringify({ message: "Saved successfully" })
             };
         }
     } catch (error) {
-        context.log.error('Rating API Error:', error);
+        context.log.error('Rating/Feedback API Error:', error);
         return {
             status: 500,
             headers: { 'Content-Type': 'application/json' },
