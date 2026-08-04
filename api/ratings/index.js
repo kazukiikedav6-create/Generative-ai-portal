@@ -22,7 +22,6 @@ module.exports = async function (context, req) {
             };
             const { resources } = await container.items.query(querySpec).fetchAll();
 
-            // エージェントごとに集計（合計点と件数）
             const stats = {};
             resources.forEach(item => {
                 if (!item.agentId || !item.rating) return;
@@ -33,7 +32,6 @@ module.exports = async function (context, req) {
                 stats[item.agentId].count += 1;
             });
 
-            // 平均点を計算（小数点第1位まで）
             const result = {};
             Object.keys(stats).forEach(agentId => {
                 const count = stats[agentId].count;
@@ -48,9 +46,9 @@ module.exports = async function (context, req) {
             };
         }
 
-        // --- POST: 評価（1〜5）を送信して保存 ---
+        // --- POST: 評価（1〜5）と改善要望メッセージを保存 ---
         if (req.method === "POST") {
-            const { agentId, rating } = req.body || {};
+            const { agentId, rating, comment } = req.body || {};
             
             if (!agentId || !rating || rating < 1 || rating > 5) {
                 return {
@@ -65,6 +63,7 @@ module.exports = async function (context, req) {
                 type: "rating",
                 agentId: agentId,
                 rating: Number(rating),
+                comment: comment || "", // 改善要望コメントを保存
                 timestamp: new Date().toISOString()
             };
 
@@ -73,7 +72,7 @@ module.exports = async function (context, req) {
             return {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: "Rating saved successfully" })
+                body: JSON.stringify({ message: "Rating and feedback saved successfully" })
             };
         }
     } catch (error) {
