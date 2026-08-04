@@ -107,7 +107,7 @@
         .feedback-textarea:focus { border-color: var(--primary-color); }
         .btn-submit-feedback { width: 100%; margin-top: 6px; padding: 6px; background: var(--primary-color); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-submit-feedback:hover { background-color: #005a9e; }
-        .feedback-done-msg { display: none; color: #137333; font-size: 11px; margin-top: 4px; background: #e6f4ea; padding: 8px; border-radius: 4px; text-align: center; font-weight: bold; }
+        .feedback-done-msg { display: none; color: #137333; font-size: 11px; margin-top: 4px; background: #e6f4ea; padding: 6px; border-radius: 4px; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -323,8 +323,9 @@
                 <div class="feedback-box">
                     <h4 style="font-size:12px; margin-bottom:2px;">💬 評価・改善要望</h4>
                     
-                    <div id="rating-form-area">
-                        <p style="color: #605e5c; font-size: 10.5px;">星を選択してください（1人1回）：</p>
+                    <!-- 星評価セクション -->
+                    <div id="star-rating-section">
+                        <p style="color: #605e5c; font-size: 10.5px;" id="star-instruction">星を選択してください（1人1回）：</p>
                         <div class="star-rating-input" id="star-input-group">
                             <span onclick="setRating(1)">★</span>
                             <span onclick="setRating(2)">★</span>
@@ -332,12 +333,17 @@
                             <span onclick="setRating(4)">★</span>
                             <span onclick="setRating(5)">★</span>
                         </div>
-                        <textarea id="feedback-comment" class="feedback-textarea" placeholder="改善要望やメッセージがあれば入力してください（任意）"></textarea>
-                        <button class="btn-submit-feedback" onclick="submitRatingAndFeedback()">送信する</button>
+                        <div id="star-rated-badge" style="display:none; color:#137333; font-size:11px; font-weight:bold; margin:4px 0;">
+                            ✅ 評価済み (<span id="user-saved-rating-val">0</span>点)
+                        </div>
                     </div>
 
-                    <div id="rating-done-area" class="feedback-done-msg">
-                        ✅ このエージェントは評価済みです。ご協力ありがとうございました！
+                    <!-- 改善要望入力エリア（何回でも送信可） -->
+                    <textarea id="feedback-comment" class="feedback-textarea" placeholder="改善要望やメッセージを入力してください（何回でも送信可）"></textarea>
+                    <button class="btn-submit-feedback" onclick="submitFeedback()">送信する</button>
+                    
+                    <div id="feedback-success-msg" class="feedback-done-msg">
+                        ✅ 送信しました！ご協力ありがとうございます。
                     </div>
                 </div>
             </div>
@@ -469,50 +475,77 @@
 
         // --- ユーザーの評価済み状態をチェック ---
         function checkUserRatingState(agentId) {
-            const hasRated = localStorage.getItem(`rated_${agentId}`);
-            const formArea = document.getElementById('rating-form-area');
-            const doneArea = document.getElementById('rating-done-area');
+            const savedRating = localStorage.getItem(`rated_${agentId}`);
+            const starInstruction = document.getElementById('star-instruction');
+            const starGroup = document.getElementById('star-input-group');
+            const starBadge = document.getElementById('star-rated-badge');
 
-            if (hasRated) {
-                formArea.style.display = 'none';
-                doneArea.style.display = 'block';
+            if (savedRating) {
+                starInstruction.style.display = 'none';
+                starGroup.style.display = 'none';
+                starBadge.style.display = 'block';
+                document.getElementById('user-saved-rating-val').innerText = savedRating;
             } else {
-                formArea.style.display = 'block';
-                doneArea.style.display = 'none';
+                starInstruction.style.display = 'block';
+                starGroup.style.display = 'flex';
+                starBadge.style.display = 'none';
                 setRating(0);
-                document.getElementById('feedback-comment').value = '';
             }
+            document.getElementById('feedback-comment').value = '';
+            document.getElementById('feedback-success-msg').style.display = 'none';
         }
 
-        // --- 評価と改善要望の送信処理 ---
-        async function submitRatingAndFeedback() {
+        // --- 評価および改善要望の送信処理 ---
+        async function submitFeedback() {
             if (!currentAgentKey) return;
             
-            if (selectedRatingValue === 0) {
-                alert("星（1〜5）を選択してください。");
+            const commentText = document.getElementById('feedback-comment').value.trim();
+            const savedRating = localStorage.getItem(`rated_${currentAgentKey}`);
+
+            // 星評価が未完了かつ星も未選択で、改善要望コメントも空の場合
+            if (!savedRating && selectedRatingValue === 0 && !commentText) {
+                alert("星を選択するか、改善要望メッセージを入力してください。");
                 return;
             }
 
-            const commentText = document.getElementById('feedback-comment').value.trim();
+            if (savedRating && !commentText) {
+                alert("改善要望メッセージを入力してください。");
+                return;
+            }
+
+            const payload = {
+                agentId: currentAgentKey,
+                comment: commentText
+            };
+
+            // まだ星評価していない場合のみ rating を含めて送信
+            if (!savedRating && selectedRatingValue > 0) {
+                payload.rating = selectedRatingValue;
+            }
 
             try {
                 const response = await fetch('/api/ratings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        agentId: currentAgentKey,
-                        rating: selectedRatingValue,
-                        comment: commentText
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    // 評価済みフラグを端末に記憶（1人1回制限）
-                    localStorage.setItem(`rated_${currentAgentKey}`, selectedRatingValue);
-                    
-                    // 画面の更新
+                    // 初回星評価があった場合はローカルに記憶（1人1回制限）
+                    if (!savedRating && selectedRatingValue > 0) {
+                        localStorage.setItem(`rated_${currentAgentKey}`, selectedRatingValue);
+                    }
+
+                    // 画面の星表示状態を更新＆コメント欄をリセット
                     checkUserRatingState(currentAgentKey);
                     loadRatings(); 
+
+                    // 送信完了メッセージを表示（3秒後自動非表示）
+                    const msgElem = document.getElementById('feedback-success-msg');
+                    msgElem.style.display = 'block';
+                    setTimeout(() => {
+                        msgElem.style.display = 'none';
+                    }, 3000);
                 } else {
                     alert("送信に失敗しました。");
                 }
