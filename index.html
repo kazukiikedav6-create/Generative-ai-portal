@@ -77,6 +77,14 @@
         /* ピン留め件数0のメッセージ */
         .empty-pinned-msg { display: none; text-align: center; padding: 40px 20px; color: var(--text-sub); font-size: 13px; border: 2px dashed var(--border-color); border-radius: 8px; background: #fafafa; }
 
+        /* コメントダッシュボードスタイル */
+        .comments-table-container { display: none; background: white; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .comments-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+        .comments-table th { background: #faf9f8; padding: 10px 12px; border-bottom: 1px solid var(--border-color); font-weight: bold; color: var(--text-sub); }
+        .comments-table td { padding: 10px 12px; border-bottom: 1px solid #f3f2f1; vertical-align: top; }
+        .comments-table tr:hover { background-color: #fafafa; }
+        .badge-agent { background: #eef6ff; color: var(--primary-color); font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+
         /* 右側チャットパネル（初期状態は display: none） */
         .chat-panel { width: 380px; background: white; border-left: 1px solid var(--border-color); display: none; flex-direction: column; flex-shrink: 0; }
         .chat-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); background: #faf9f8; display: flex; justify-content: space-between; align-items: center; height: 46px; }
@@ -120,6 +128,7 @@
             <div class="sidebar-label">ワークスペース</div>
             <a class="nav-item active" id="nav-home" onclick="switchPage('home')">🏠 ホーム</a>
             <a class="nav-item">📊 統計ダッシュボード</a>
+            <a class="nav-item" id="nav-comments" onclick="switchPage('comments')">💬 改善要望・コメント</a>
             <a class="nav-item">💡 AI要望</a>
             <a class="nav-item">🛠️ 開発者</a>
         </div>
@@ -203,7 +212,7 @@
                                 <button class="pin-btn" onclick="togglePin(event, 'nyuuryoku_totsugou')" title="ピン留め">📌</button>
                             </div>
                             <div class="agent-card-title">入票突合エージェント</div>
-                            <div class="agent-card-desc">SHIFTへの入力簡略化や注文書と申込書の突合を行うエージェント</div>
+                            <div class="agent-card-desc">LC・船積書類PDFのOCRデータとSWIFT項目を照合し、判定結果を出力。</div>
                         </div>
                         <div class="agent-card-footer">
                             <span class="agent-rating-badge" id="rating-nyuuryoku_totsugou">★ -- (-)</span>
@@ -291,6 +300,26 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- コメント確認ダッシュボード一覧エリア -->
+                <div id="comments-container" class="comments-table-container">
+                    <table class="comments-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">対象エージェント</th>
+                                <th style="width: 12%;">評価</th>
+                                <th>改善要望・コメント内容</th>
+                                <th style="width: 20%;">投稿日時</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comments-table-body">
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: #888;">データを読み込んでいます...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
 
             <!-- 右側：チャット＆ログ収集パネル -->
@@ -374,6 +403,10 @@
 
             document.getElementById('nav-home').classList.remove('active');
             document.getElementById('nav-pinned').classList.remove('active');
+            document.getElementById('nav-comments').classList.remove('active');
+
+            const agentGrid = document.getElementById('agent-grid');
+            const commentsContainer = document.getElementById('comments-container');
 
             if (page === 'home') {
                 document.getElementById('nav-home').classList.add('active');
@@ -381,15 +414,69 @@
                 document.getElementById('view-desc').innerText = '業務エージェントをワンクリックで起動。そのまま右側で対話できます。';
                 document.getElementById('recommend-section').style.display = 'flex';
                 document.getElementById('category-tabs').style.display = 'flex';
+                agentGrid.style.display = 'grid';
+                commentsContainer.style.display = 'none';
             } else if (page === 'pinned') {
                 document.getElementById('nav-pinned').classList.add('active');
                 document.getElementById('view-title').innerText = '📌 ピン留めエージェント';
                 document.getElementById('view-desc').innerText = 'よく利用するエージェントとしてピン留めされたカードの一覧です。';
                 document.getElementById('recommend-section').style.display = 'none';
                 document.getElementById('category-tabs').style.display = 'none';
+                agentGrid.style.display = 'grid';
+                commentsContainer.style.display = 'none';
+            } else if (page === 'comments') {
+                document.getElementById('nav-comments').classList.add('active');
+                document.getElementById('view-title').innerText = '💬 改善要望・コメント一覧';
+                document.getElementById('view-desc').innerText = '利用者から寄せられた評価と改善要望コメントを確認できます。';
+                document.getElementById('recommend-section').style.display = 'none';
+                document.getElementById('category-tabs').style.display = 'none';
+                agentGrid.style.display = 'none';
+                commentsContainer.style.display = 'block';
+                loadAdminComments(); // コメント取得実行
             }
 
             renderCards();
+        }
+
+        // --- 管理者ダッシュボード：改善要望コメント一覧の取得・描画 ---
+        async function loadAdminComments() {
+            const tbody = document.getElementById('comments-table-body');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">データを読み込んでいます...</td></tr>';
+
+            try {
+                const response = await fetch('/api/comments');
+                if (!response.ok) throw new Error('API Error');
+
+                const comments = await response.json();
+
+                if (comments.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">まだ寄せられたコメントはありません。</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = comments.map(item => {
+                    const agentName = agentMap[item.agentId] ? agentMap[item.agentId].name : item.agentId;
+                    const ratingText = item.rating ? `<span style="color:var(--star-color); font-weight:bold;">★ ${item.rating}</span>` : '<span style="color:#aaa;">未評価</span>';
+                    const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('ja-JP') : '-';
+                    
+                    return `
+                        <tr>
+                            <td><span class="badge-agent">${agentName}</span></td>
+                            <td>${ratingText}</td>
+                            <td style="white-space: pre-wrap; word-break: break-all;">${escapeHtml(item.comment)}</td>
+                            <td style="color: #888; font-size: 11px;">${dateStr}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('[COMMENTS LOAD ERROR]', err);
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #c62828;">コメントデータの取得に失敗しました。</td></tr>';
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
         function togglePin(event, key) {
@@ -404,6 +491,8 @@
         }
 
         function renderCards() {
+            if (currentPage === 'comments') return;
+
             let visibleCount = 0;
 
             document.querySelectorAll('.agent-card').forEach(card => {
@@ -502,7 +591,6 @@
             const commentText = document.getElementById('feedback-comment').value.trim();
             const savedRating = localStorage.getItem(`rated_${currentAgentKey}`);
 
-            // 星評価が未完了かつ星も未選択で、改善要望コメントも空の場合
             if (!savedRating && selectedRatingValue === 0 && !commentText) {
                 alert("星を選択するか、改善要望メッセージを入力してください。");
                 return;
@@ -518,7 +606,6 @@
                 comment: commentText
             };
 
-            // まだ星評価していない場合のみ rating を含めて送信
             if (!savedRating && selectedRatingValue > 0) {
                 payload.rating = selectedRatingValue;
             }
@@ -531,16 +618,13 @@
                 });
 
                 if (response.ok) {
-                    // 初回星評価があった場合はローカルに記憶（1人1回制限）
                     if (!savedRating && selectedRatingValue > 0) {
                         localStorage.setItem(`rated_${currentAgentKey}`, selectedRatingValue);
                     }
 
-                    // 画面の星表示状態を更新＆コメント欄をリセット
                     checkUserRatingState(currentAgentKey);
                     loadRatings(); 
 
-                    // 送信完了メッセージを表示（3秒後自動非表示）
                     const msgElem = document.getElementById('feedback-success-msg');
                     msgElem.style.display = 'block';
                     setTimeout(() => {
