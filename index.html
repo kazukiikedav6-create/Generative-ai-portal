@@ -1,227 +1,758 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <!-- ① スマホの画面サイズ自動調整（必須設定） -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>社内AIポータル</title>
-  <style>
-    /* --- 全体・PC向け基本スタイル --- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      height: 100vh;
-      display: flex;
-      overflow: hidden;
-      background-color: #f4f4f9;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generative AI Portal</title>
+    <style>
+        :root {
+            --bg-color: #f4f5f7;
+            --sidebar-bg: #1e252b;
+            --card-bg: #ffffff;
+            --primary-color: #0078d4;
+            --border-color: #e1dfdd;
+            --text-main: #323130;
+            --text-sub: #605e5c;
+            --star-color: #ffb900;
+        }
 
-    /* モバイル用ヘッダー（デフォルトPC表示では非表示） */
-    .mobile-header {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 50px;
-      background-color: #202123;
-      color: #fff;
-      align-items: center;
-      padding: 0 15px;
-      z-index: 100;
-    }
-    /* タッチターゲット確保（最小44pxで指押しを快適に） */
-    .menu-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 24px;
-      cursor: pointer;
-      min-width: 44px;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', 'Helvetica Neue', sans-serif; }
+        body { display: flex; height: 100vh; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; }
 
-    /* サイドバー（チャット履歴等） */
-    .sidebar {
-      width: 260px;
-      background-color: #202123;
-      color: #fff;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.3s ease;
-      z-index: 90;
-    }
-    .sidebar-title {
-      font-size: 18px;
-      margin-bottom: 20px;
-    }
+        /* 左サイドバー（幅狭 180px） */
+        .sidebar { width: 200px; background-color: var(--sidebar-bg); color: #abb2bf; padding: 12px 8px; display: flex; flex-direction: column; gap: 15px; font-size: 12px; flex-shrink: 0; overflow-y: auto; }
+        .sidebar-title { color: #fff; font-weight: bold; font-size: 13px; padding: 4px 6px; display: flex; align-items: center; gap: 6px; }
+        .sidebar-section { display: flex; flex-direction: column; gap: 2px; }
+        .sidebar-label { font-size: 10px; text-transform: uppercase; color: #5c6370; padding: 4px 6px; font-weight: bold; }
+        .nav-item { padding: 6px 8px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; color: inherit; font-size: 11.5px; }
+        .nav-item:hover, .nav-item.active { background-color: #2c313a; color: #fff; }
 
-    /* メイン対話エリア */
-    .chat-main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      position: relative;
-    }
-    .chat-history {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .message {
-      margin-bottom: 15px;
-      max-width: 80%;
-      padding: 12px 16px;
-      border-radius: 8px;
-      line-height: 1.5;
-    }
-    .user-msg {
-      background-color: #0078d4;
-      color: white;
-      margin-left: auto;
-    }
-    .ai-msg {
-      background-color: #ffffff;
-      border: 1px solid #e0e0e0;
-      color: #333;
-    }
+        /* メインエリア */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* 入力フォームエリア */
-    .input-area {
-      padding: 20px;
-      background-color: #ffffff;
-      border-top: 1px solid #e0e0e0;
-      display: flex;
-      gap: 10px;
-    }
-    /* ★iOSでのタップ時画面自動ズームを防ぐため font-size: 16px 以上に指定 */
-    .input-area input {
-      flex: 1;
-      padding: 12px;
-      font-size: 16px; 
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      outline: none;
-    }
-    .input-area button {
-      padding: 0 20px;
-      background-color: #0078d4;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      min-height: 44px; /* タッチターゲットサイズ確保 */
-      min-width: 60px;
-    }
+        header { height: 50px; background-color: #2b323b; color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 13px; }
+        .search-bar { display: flex; align-items: center; background: #3b424d; padding: 4px 12px; border-radius: 4px; width: 360px; }
+        .search-bar input { background: transparent; border: none; color: white; outline: none; margin-left: 8px; width: 100%; font-size: 12px; }
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .btn-add-req { background-color: #e81123; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .user-avatar { width: 28px; height: 28px; background: #0078d4; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
 
-    /* スマホでメニューを開いたときの背景オーバーレイ */
-    .overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 80;
-    }
+        .content-body { flex: 1; display: flex; overflow: hidden; }
 
-    /* --- ② スマホ用切り替え設定 (768px以下) --- */
-    @media (max-width: 768px) {
-      .mobile-header {
-        display: flex;
-      }
-      .sidebar {
-        position: fixed;
-        top: 50px;
-        left: 0;
-        height: calc(100vh - 50px);
-        transform: translateX(-100%); /* 初期状態は画面左外に格納 */
-      }
-      .sidebar.active {
-        transform: translateX(0); /* ハンバーガーメニューで左からスライド表示 */
-      }
-      .chat-main {
-        padding-top: 50px; /* モバイルヘッダー分の余白 */
-      }
-      .message {
-        max-width: 90%; /* スマホ画面に合わせて吹き出し幅を少し広げる */
-      }
-      .input-area {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-      }
-      .chat-history {
-        padding-bottom: 90px; /* 下部固定の入力バーと重ならないよう余白を追加 */
-      }
-      .overlay.active {
-        display: block;
-      }
-    }
-  </style>
+        /* 中央ポータルエリア */
+        .portal-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; transition: all 0.2s ease; }
+        .welcome-title h2 { font-size: 18px; margin-bottom: 4px; }
+        .welcome-title p { font-size: 12px; color: var(--text-sub); }
+
+        /* おすすめセクション */
+        .recommend-section { display: flex; gap: 15px; }
+        .recommend-card { flex: 1; background: #fff3e6; border: 1px solid #ffd8b3; border-radius: 6px; padding: 12px 15px; font-size: 12px; position: relative; }
+        .recommend-tag { position: absolute; top: -8px; left: 12px; background: #ff6b00; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: bold; }
+        .recommend-title { font-weight: bold; margin-top: 4px; margin-bottom: 2px; }
+
+        /* カテゴリタブ */
+        .category-tabs { display: flex; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border-color); overflow-x: auto; flex-shrink: 0; align-items: center; }
+        .tab-item { padding: 6px 14px; background: #ffffff; color: var(--text-main); border: 1px solid #d1d5db; border-radius: 16px; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: 0.2s; line-height: 1.2; display: inline-flex; align-items: center; justify-content: center; }
+        .tab-item:hover { background: #f3f4f6; border-color: #9ca3af; }
+        .tab-item.active { background: var(--sidebar-bg); color: #ffffff; border-color: var(--sidebar-bg); font-weight: bold; }
+
+        /* エージェントカードグリッド */
+        .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 15px; }
+        .agent-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; height: 165px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: 0.2s; position: relative; }
+        .agent-card:hover { border-color: var(--primary-color); box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
+        .agent-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .badge-live { background: #e6f4ea; color: #137333; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; width: fit-content; }
+        
+        /* ピン留めボタン */
+        .pin-btn { background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.25; transition: 0.2s; padding: 2px; border-radius: 4px; }
+        .pin-btn:hover { opacity: 0.8; background: #f0f0f0; }
+        .pin-btn.active { opacity: 1; filter: drop-shadow(0 0 2px rgba(255,165,0,0.8)); }
+
+        .agent-card-title { font-size: 13.5px; font-weight: bold; margin-bottom: 4px; }
+        .agent-card-desc { font-size: 11px; color: var(--text-sub); line-height: 1.4; }
+        .agent-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f3f2f1; }
+        .agent-rating-badge { font-size: 11px; color: var(--star-color); font-weight: 500; }
+        .btn-use { background: var(--primary-color); color: white; border: none; padding: 5px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; }
+
+        /* ピン留め件数0のメッセージ */
+        .empty-pinned-msg { display: none; text-align: center; padding: 40px 20px; color: var(--text-sub); font-size: 13px; border: 2px dashed var(--border-color); border-radius: 8px; background: #fafafa; }
+
+        /* コメントダッシュボードスタイル */
+        .comments-table-container { display: none; background: white; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .comments-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+        .comments-table th { background: #faf9f8; padding: 10px 12px; border-bottom: 1px solid var(--border-color); font-weight: bold; color: var(--text-sub); }
+        .comments-table td { padding: 10px 12px; border-bottom: 1px solid #f3f2f1; vertical-align: top; }
+        .comments-table tr:hover { background-color: #fafafa; }
+        .badge-agent { background: #eef6ff; color: var(--primary-color); font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+
+        /* 右側チャットパネル（初期状態は display: none） */
+        .chat-panel { width: 380px; background: white; border-left: 1px solid var(--border-color); display: none; flex-direction: column; flex-shrink: 0; }
+        .chat-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); background: #faf9f8; display: flex; justify-content: space-between; align-items: center; height: 46px; }
+        .chat-agent-info { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 13px; }
+        .chat-actions { display: flex; align-items: center; gap: 10px; }
+        .btn-close-chat { background: none; border: none; font-size: 16px; cursor: pointer; color: #888; font-weight: bold; }
+        .btn-close-chat:hover { color: #333; }
+        
+        .chat-iframe-container { flex: 1; width: 100%; background: #fcfcfc; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+        .chat-iframe-container iframe { width: 100%; height: 100%; border: none; }
+
+        /* テスト用簡易チャット表示エリア */
+        .chat-messages-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 12px; }
+        .chat-msg { padding: 8px 12px; border-radius: 8px; max-width: 85%; line-height: 1.4; }
+        .chat-msg.bot { background: #eef6ff; align-self: flex-start; color: #1e252b; }
+        .chat-msg.user { background: #0078d4; color: white; align-self: flex-end; }
+        
+        .chat-input-area { padding: 10px 12px; border-top: 1px solid var(--border-color); background: #fff; display: flex; gap: 8px; }
+        .chat-input-area input { flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; font-size: 12px; }
+        .btn-send { background: var(--primary-color); color: white; border: none; padding: 0 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+
+        /* 評価＆改善要望フィードバックエリア */
+        .feedback-box { padding: 12px 15px; border-top: 1px solid var(--border-color); background: #faf9f8; font-size: 11px; }
+        .star-rating-input { display: flex; gap: 6px; margin: 4px 0; }
+        .star-rating-input span { font-size: 18px; color: #ccc; cursor: pointer; transition: color 0.15s; }
+        .star-rating-input span:hover { color: var(--star-color); }
+        .feedback-textarea { width: 100%; height: 48px; margin-top: 6px; padding: 6px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 4px; resize: none; outline: none; font-family: inherit; }
+        .feedback-textarea:focus { border-color: var(--primary-color); }
+        .btn-submit-feedback { width: 100%; margin-top: 6px; padding: 6px; background: var(--primary-color); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .btn-submit-feedback:hover { background-color: #005a9e; }
+        .feedback-done-msg { display: none; color: #137333; font-size: 11px; margin-top: 4px; background: #e6f4ea; padding: 6px; border-radius: 4px; text-align: center; font-weight: bold; }
+    </style>
 </head>
 <body>
 
-  <!-- スマホ用上部バー -->
-  <div class="mobile-header">
-    <button class="menu-btn" id="menuToggle" aria-label="メニュー開閉">☰</button>
-    <span style="margin-left: 10px; font-weight: bold;">社内AIポータル</span>
-  </div>
+    <!-- 左ナビゲーション -->
+    <div class="sidebar">
+        <div class="sidebar-title">⚡ Generative AI Portal</div>
+        
+        <div class="sidebar-section">
+            <div class="sidebar-label">ワークスペース</div>
+            <a class="nav-item active" id="nav-home" onclick="switchPage('home')">🏠 ホーム</a>
+            <a class="nav-item">📊 統計ダッシュボード</a>
+            <a class="nav-item" id="nav-comments" onclick="switchPage('comments')">💬 改善要望・コメント</a>
+            <a class="nav-item">💡 AI要望</a>
+            <a class="nav-item">🛠️ 開発者</a>
+        </div>
 
-  <!-- 左側サイドバー -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-title">会話履歴</div>
-    <p style="font-size: 14px; opacity: 0.8;">・過去の相談ログ 1</p>
-    <p style="font-size: 14px; opacity: 0.8; margin-top: 10px;">・過去の相談ログ 2</p>
-  </aside>
+        <div class="sidebar-section">
+            <div class="sidebar-label">フィルタ</div>
+            <a class="nav-item" id="nav-pinned" onclick="switchPage('pinned')">📌 ピン留めエージェント</a>
+            <a class="nav-item">🕒 最近使用したエージェント</a>
+            <a class="nav-item">⭐ 評価順</a>
+        </div>
 
-  <!-- スマホ用メニュー開閉時の背景カバー -->
-  <div class="overlay" id="overlay"></div>
-
-  <!-- メイン対話画面 -->
-  <main class="chat-main">
-    <div class="chat-history">
-      <div class="message ai-msg">
-        こんにちは！何かお手伝いできることはありますか？
-      </div>
-      <div class="message user-msg">
-        スマホ用画面のレスポンシブ表示を確認しています。
-      </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">カテゴリ</div>
+            <a class="nav-item">💰 財務</a>
+            <a class="nav-item">📋 業務・制度</a>
+            <a class="nav-item">📄 書類・文書</a>
+            <a class="nav-item">🗣️ 会議</a>
+            <a class="nav-item">🔤 英語</a>
+            <a class="nav-item">📊 データ・Excel</a>
+        </div>
     </div>
 
-    <!-- 下部入力エリア -->
-    <div class="input-area">
-      <input type="text" placeholder="メッセージを入力..." />
-      <button>送信</button>
+    <!-- メインエリア -->
+    <div class="main-wrapper">
+        <header>
+            <div class="search-bar">
+                🔍 <input type="text" placeholder="画像参照 / 高画質 / FX / 英文メール / 制裁対応 ...">
+            </div>
+            <div class="header-actions">
+                <button class="btn-add-req">＋ 新規AI要望</button>
+                <div class="user-avatar">DU</div>
+            </div>
+        </header>
+
+        <div class="content-body">
+            <!-- 中央ポータルエリア -->
+            <div class="portal-area">
+                <div class="welcome-title">
+                    <h2 id="view-title">こんにちは、何から始めますか？</h2>
+                    <p id="view-desc">業務エージェントをワンクリックで起動。そのまま右側で対話できます。</p>
+                </div>
+
+                <!-- おすすめエリア -->
+                <div class="recommend-section" id="recommend-section">
+                    <div class="recommend-card">
+                        <span class="recommend-tag">最近追加されたエージェント</span>
+                        <div class="recommend-title">「入票突合エージェント」</div>
+                        <div>LC・船積書類PDFのOCRデータとSWIFT項目を照合し、突合判定結果を出力。</div>
+                    </div>
+                    <div class="recommend-card" style="background: #eef6ff; border-color: #cce3ff;">
+                        <span class="recommend-tag" style="background: #0078d4;">高評価エージェント</span>
+                        <div class="recommend-title">「Excel 条件抽出の式を提案」</div>
+                        <div>COUNTIFS / FILTER / TEXTJOIN など目的に適合した複雑な関数・数式を提示。★4.8 (8件)</div>
+                    </div>
+                </div>
+
+                <!-- カテゴリタブ -->
+                <div class="category-tabs" id="category-tabs">
+                    <button class="tab-item active">すべて</button>
+                    <button class="tab-item">財務</button>
+                    <button class="tab-item">業務/制度</button>
+                    <button class="tab-item">書類/文書</button>
+                    <button class="tab-item">会議</button>
+                    <button class="tab-item">英語</button>
+                    <button class="tab-item">データ/Excel</button>
+                </div>
+
+                <!-- ピン留め0件時のメッセージ -->
+                <div id="empty-pinned-msg" class="empty-pinned-msg">
+                    📌 ピン留めされたエージェントはまだありません。<br>
+                    カードの右上にある 📌 ボタンを押すと、よく使うエージェントとしてここに登録されます。
+                </div>
+
+                <!-- エージェントカード一覧 -->
+                <div class="agent-grid" id="agent-grid">
+                    <!-- 1. 入票突合エージェント (Copilot Studio 埋め込み済み) -->
+                    <div class="agent-card" data-key="nyuuryoku_totsugou" style="border-color: #0078d4;">
+                        <div>
+                            <div class="agent-card-header">
+                                <span class="badge-live" style="background:#ffebee; color:#c62828;">● 突合処理</span>
+                                <button class="pin-btn" onclick="togglePin(event, 'nyuuryoku_totsugou')" title="ピン留め">📌</button>
+                            </div>
+                            <div class="agent-card-title">入票突合エージェント</div>
+                            <div class="agent-card-desc">LC・船積書類PDFのOCRデータとSWIFT項目を照合し、判定結果を出力。</div>
+                        </div>
+                        <div class="agent-card-footer">
+                            <span class="agent-rating-badge" id="rating-nyuuryoku_totsugou">★ -- (-)</span>
+                            <button class="btn-use" onclick="selectAgent('nyuuryoku_totsugou')">使う</button>
+                        </div>
+                    </div>
+
+                    <!-- 2. 社内AIチャット (汎用) -->
+                    <div class="agent-card" data-key="general">
+                        <div>
+                            <div class="agent-card-header">
+                                <span class="badge-live">● LIVE</span>
+                                <button class="pin-btn" onclick="togglePin(event, 'general')" title="ピン留め">📌</button>
+                            </div>
+                            <div class="agent-card-title">社内AIチャット (汎用)</div>
+                            <div class="agent-card-desc">雑談・調べ物・アイデア出し等、業務時短・効率化の隙間を埋める汎用AI。</div>
+                        </div>
+                        <div class="agent-card-footer">
+                            <span class="agent-rating-badge" id="rating-general">★ -- (-)</span>
+                            <button class="btn-use" onclick="selectAgent('general')">使う</button>
+                        </div>
+                    </div>
+
+                    <!-- 3. 英文メール：丁寧度 -->
+                    <div class="agent-card" data-key="english_mail">
+                        <div>
+                            <div class="agent-card-header">
+                                <span class="badge-live">● LIVE</span>
+                                <button class="pin-btn" onclick="togglePin(event, 'english_mail')" title="ピン留め">📌</button>
+                            </div>
+                            <div class="agent-card-title">英文メール：丁寧度</div>
+                            <div class="agent-card-desc">角が立たないフォーマル英文の作成。海外取引先との信頼確保。</div>
+                        </div>
+                        <div class="agent-card-footer">
+                            <span class="agent-rating-badge" id="rating-english_mail">★ -- (-)</span>
+                            <button class="btn-use" onclick="selectAgent('english_mail')">使う</button>
+                        </div>
+                    </div>
+
+                    <!-- 4. 業務文書ブラッシュアップ -->
+                    <div class="agent-card" data-key="doc_polish">
+                        <div>
+                            <div class="agent-card-header">
+                                <span class="badge-live">● LIVE</span>
+                                <button class="pin-btn" onclick="togglePin(event, 'doc_polish')" title="ピン留め">📌</button>
+                            </div>
+                            <div class="agent-card-title">業務文書ブラッシュアップ</div>
+                            <div class="agent-card-desc">背景・リスクを社内向けに自然な文体へ整える精緻化エージェント。</div>
+                        </div>
+                        <div class="agent-card-footer">
+                            <span class="agent-rating-badge" id="rating-doc_polish">★ -- (-)</span>
+                            <button class="btn-use" onclick="selectAgent('doc_polish')">使う</button>
+                        </div>
+                    </div>
+
+                    <!-- 5. Excel 条件抽出の式を提案 -->
+                    <div class="agent-card" data-key="excel_formula">
+                        <div>
+                            <div class="agent-card-header">
+                                <span class="badge-live">● LIVE</span>
+                                <button class="pin-btn" onclick="togglePin(event, 'excel_formula')" title="ピン留め">📌</button>
+                            </div>
+                            <div class="agent-card-title">Excel 条件抽出の式を提案</div>
+                            <div class="agent-card-desc">COUNTIFS / FILTER / TEXTJOIN など目的に適合した関数構成を提示。</div>
+                        </div>
+                        <div class="agent-card-footer">
+                            <span class="agent-rating-badge" id="rating-excel_formula">★ -- (-)</span>
+                            <button class="btn-use" onclick="selectAgent('excel_formula')">使う</button>
+                        </div>
+                    </div>
+
+                    <!-- 6. 財務FAQ (社内ルール) -->
+                    <div class="agent-card" data-key="finance_faq">
+                        <div>
+                            <div class="agent-card-header">
+                                <span class="badge-live" style="background: #fff8e1; color: #f57f17;">● BETA</span>
+                                <button class="pin-btn" onclick="togglePin(event, 'finance_faq')" title="ピン留め">📌</button>
+                            </div>
+                            <div class="agent-card-title">財務FAQ (社内ルール)</div>
+                            <div class="agent-card-desc">FX権限・送金手数料・口座管理など、社内規定の参照を高速化。</div>
+                        </div>
+                        <div class="agent-card-footer">
+                            <span class="agent-rating-badge" id="rating-finance_faq">★ -- (-)</span>
+                            <button class="btn-use" onclick="selectAgent('finance_faq')">使う</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- コメント確認ダッシュボード一覧エリア -->
+                <div id="comments-container" class="comments-table-container">
+                    <table class="comments-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">対象エージェント</th>
+                                <th style="width: 12%;">評価</th>
+                                <th>改善要望・コメント内容</th>
+                                <th style="width: 20%;">投稿日時</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comments-table-body">
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: #888;">データを読み込んでいます...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- 右側：チャット＆ログ収集パネル -->
+            <div class="chat-panel" id="chat-panel">
+                <div class="chat-header">
+                    <div class="chat-agent-info">
+                        🤖 <span id="current-agent-title">エージェント名</span>
+                    </div>
+                    <div class="chat-actions">
+                        <span style="font-size: 11px; color: #888; cursor: pointer;" onclick="reloadAgent()" title="再読み込み">🔄</span>
+                        <button class="btn-close-chat" onclick="closeChat()" title="閉じる">✕</button>
+                    </div>
+                </div>
+
+                <div class="chat-iframe-container">
+                    <!-- Copilot Studio 用 iframe 枠 -->
+                    <iframe id="copilot-iframe" src="" style="display:none;"></iframe>
+
+                    <!-- モック対話エリア（URLが無いエージェント用） -->
+                    <div id="mock-placeholder" style="display:none; flex-direction:column; height:100%;">
+                        <div id="chat-messages" class="chat-messages-box"></div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chat-input" placeholder="メッセージを入力..." onkeypress="if(event.key==='Enter') sendMessage()">
+                            <button class="btn-send" onclick="sendMessage()">送信</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 評価＆改善要望エリア -->
+                <div class="feedback-box">
+                    <h4 style="font-size:12px; margin-bottom:2px;">💬 評価・改善要望</h4>
+                    
+                    <!-- 星評価セクション -->
+                    <div id="star-rating-section">
+                        <p style="color: #605e5c; font-size: 10.5px;" id="star-instruction">星を選択してください（1人1回）：</p>
+                        <div class="star-rating-input" id="star-input-group">
+                            <span onclick="setRating(1)">★</span>
+                            <span onclick="setRating(2)">★</span>
+                            <span onclick="setRating(3)">★</span>
+                            <span onclick="setRating(4)">★</span>
+                            <span onclick="setRating(5)">★</span>
+                        </div>
+                        <div id="star-rated-badge" style="display:none; color:#137333; font-size:11px; font-weight:bold; margin:4px 0;">
+                            ✅ 評価済み (<span id="user-saved-rating-val">0</span>点)
+                        </div>
+                    </div>
+
+                    <!-- 改善要望入力エリア（何回でも送信可） -->
+                    <textarea id="feedback-comment" class="feedback-textarea" placeholder="改善要望やメッセージを入力してください（何回でも送信可）"></textarea>
+                    <button class="btn-submit-feedback" onclick="submitFeedback()">送信する</button>
+                    
+                    <div id="feedback-success-msg" class="feedback-done-msg">
+                        ✅ 送信しました！ご協力ありがとうございます。
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </main>
 
-  <script>
-    // ハンバーガーメニューの開閉アニメーション処理
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
+    <script>
+        // ★ エージェントマップ（入票突合エージェントの URL 埋め込み済み）
+        const agentMap = {
+            'nyuuryoku_totsugou': { 
+                name: '入票突合エージェント', 
+                url: 'https://copilotstudio.microsoft.com/environments/e8ceeb01-a39b-e07b-b763-34b6920af0b0/bots/cr4f0_nyuuryokutotsugou/webchat?__version__=2' 
+            },
+            'general': { name: '社内AIチャット (汎用)', url: '' },
+            'english_mail': { name: '英文メール：丁寧度', url: '' },
+            'doc_polish': { name: '業務文書ブラッシュアップ', url: '' },
+            'excel_formula': { name: 'Excel 条件抽出の式を提案', url: '' },
+            'finance_faq': { name: '財務FAQ (社内ルール)', url: '' }
+        };
 
-    function toggleSidebar() {
-      sidebar.classList.toggle('active');
-      overlay.classList.toggle('active');
-    }
+        let currentAgentKey = null;
+        let currentPage = 'home';
+        let pinnedKeys = JSON.parse(localStorage.getItem('pinned_agents') || '["nyuuryoku_totsugou"]');
+        let selectedRatingValue = 0;
 
-    menuToggle.addEventListener('click', toggleSidebar);
-    overlay.addEventListener('click', toggleSidebar);
-  </script>
+        function switchPage(page) {
+            currentPage = page;
+
+            document.getElementById('nav-home').classList.remove('active');
+            document.getElementById('nav-pinned').classList.remove('active');
+            document.getElementById('nav-comments').classList.remove('active');
+
+            const agentGrid = document.getElementById('agent-grid');
+            const commentsContainer = document.getElementById('comments-container');
+
+            if (page === 'home') {
+                document.getElementById('nav-home').classList.add('active');
+                document.getElementById('view-title').innerText = 'こんにちは、何から始めますか？';
+                document.getElementById('view-desc').innerText = '業務エージェントをワンクリックで起動。そのまま右側で対話できます。';
+                document.getElementById('recommend-section').style.display = 'flex';
+                document.getElementById('category-tabs').style.display = 'flex';
+                agentGrid.style.display = 'grid';
+                commentsContainer.style.display = 'none';
+            } else if (page === 'pinned') {
+                document.getElementById('nav-pinned').classList.add('active');
+                document.getElementById('view-title').innerText = '📌 ピン留めエージェント';
+                document.getElementById('view-desc').innerText = 'よく利用するエージェントとしてピン留めされたカードの一覧です。';
+                document.getElementById('recommend-section').style.display = 'none';
+                document.getElementById('category-tabs').style.display = 'none';
+                agentGrid.style.display = 'grid';
+                commentsContainer.style.display = 'none';
+            } else if (page === 'comments') {
+                document.getElementById('nav-comments').classList.add('active');
+                document.getElementById('view-title').innerText = '💬 改善要望・コメント一覧';
+                document.getElementById('view-desc').innerText = '利用者から寄せられた評価と改善要望コメントを確認できます。';
+                document.getElementById('recommend-section').style.display = 'none';
+                document.getElementById('category-tabs').style.display = 'none';
+                agentGrid.style.display = 'none';
+                commentsContainer.style.display = 'block';
+                loadAdminComments(); // コメント取得実行
+            }
+
+            renderCards();
+        }
+
+        // --- 管理者ダッシュボード：改善要望コメント一覧の取得・描画 ---
+        async function loadAdminComments() {
+            const tbody = document.getElementById('comments-table-body');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">データを読み込んでいます...</td></tr>';
+
+            try {
+                const response = await fetch('/api/comments');
+                if (!response.ok) throw new Error('API Error');
+
+                const comments = await response.json();
+
+                if (comments.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">まだ寄せられたコメントはありません。</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = comments.map(item => {
+                    const agentName = agentMap[item.agentId] ? agentMap[item.agentId].name : item.agentId;
+                    const ratingText = item.rating ? `<span style="color:var(--star-color); font-weight:bold;">★ ${item.rating}</span>` : '<span style="color:#aaa;">未評価</span>';
+                    const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('ja-JP') : '-';
+                    
+                    return `
+                        <tr>
+                            <td><span class="badge-agent">${agentName}</span></td>
+                            <td>${ratingText}</td>
+                            <td style="white-space: pre-wrap; word-break: break-all;">${escapeHtml(item.comment)}</td>
+                            <td style="color: #888; font-size: 11px;">${dateStr}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('[COMMENTS LOAD ERROR]', err);
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #c62828;">コメントデータの取得に失敗しました。</td></tr>';
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function togglePin(event, key) {
+            event.stopPropagation();
+            if (pinnedKeys.includes(key)) {
+                pinnedKeys = pinnedKeys.filter(k => k !== key);
+            } else {
+                pinnedKeys.push(key);
+            }
+            localStorage.setItem('pinned_agents', JSON.stringify(pinnedKeys));
+            renderCards();
+        }
+
+        function renderCards() {
+            if (currentPage === 'comments') return;
+
+            let visibleCount = 0;
+
+            document.querySelectorAll('.agent-card').forEach(card => {
+                const key = card.getAttribute('data-key');
+                const pinBtn = card.querySelector('.pin-btn');
+
+                if (pinnedKeys.includes(key)) {
+                    pinBtn.classList.add('active');
+                } else {
+                    pinBtn.classList.remove('active');
+                }
+
+                if (currentPage === 'pinned') {
+                    if (pinnedKeys.includes(key)) {
+                        card.style.display = 'flex';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                } else {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                }
+            });
+
+            const emptyMsg = document.getElementById('empty-pinned-msg');
+            if (currentPage === 'pinned' && visibleCount === 0) {
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+            }
+        }
+
+        // --- 全エージェントの評価データをDBから取得して画面表示を更新 ---
+        async function loadRatings() {
+            try {
+                const response = await fetch('/api/ratings');
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                Object.keys(agentMap).forEach(key => {
+                    const badge = document.getElementById(`rating-${key}`);
+                    if (badge) {
+                        if (data[key]) {
+                            badge.innerText = `★ ${data[key].average} (${data[key].count})`;
+                        } else {
+                            badge.innerText = `★ 0.0 (0)`;
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('[RATING ERROR] 評価データの取得に失敗しました:', err);
+            }
+        }
+
+        // --- 星の選択表示コントロール ---
+        function setRating(val) {
+            selectedRatingValue = val;
+            const stars = document.querySelectorAll('#star-input-group span');
+            stars.forEach((star, index) => {
+                if (index < val) {
+                    star.style.color = 'var(--star-color)';
+                } else {
+                    star.style.color = '#ccc';
+                }
+            });
+        }
+
+        // --- ユーザーの評価済み状態をチェック ---
+        function checkUserRatingState(agentId) {
+            const savedRating = localStorage.getItem(`rated_${agentId}`);
+            const starInstruction = document.getElementById('star-instruction');
+            const starGroup = document.getElementById('star-input-group');
+            const starBadge = document.getElementById('star-rated-badge');
+
+            if (savedRating) {
+                starInstruction.style.display = 'none';
+                starGroup.style.display = 'none';
+                starBadge.style.display = 'block';
+                document.getElementById('user-saved-rating-val').innerText = savedRating;
+            } else {
+                starInstruction.style.display = 'block';
+                starGroup.style.display = 'flex';
+                starBadge.style.display = 'none';
+                setRating(0);
+            }
+            document.getElementById('feedback-comment').value = '';
+            document.getElementById('feedback-success-msg').style.display = 'none';
+        }
+
+        // --- 評価および改善要望の送信処理 ---
+        async function submitFeedback() {
+            if (!currentAgentKey) return;
+            
+            const commentText = document.getElementById('feedback-comment').value.trim();
+            const savedRating = localStorage.getItem(`rated_${currentAgentKey}`);
+
+            if (!savedRating && selectedRatingValue === 0 && !commentText) {
+                alert("星を選択するか、改善要望メッセージを入力してください。");
+                return;
+            }
+
+            if (savedRating && !commentText) {
+                alert("改善要望メッセージを入力してください。");
+                return;
+            }
+
+            const payload = {
+                agentId: currentAgentKey,
+                comment: commentText
+            };
+
+            if (!savedRating && selectedRatingValue > 0) {
+                payload.rating = selectedRatingValue;
+            }
+
+            try {
+                const response = await fetch('/api/ratings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    if (!savedRating && selectedRatingValue > 0) {
+                        localStorage.setItem(`rated_${currentAgentKey}`, selectedRatingValue);
+                    }
+
+                    checkUserRatingState(currentAgentKey);
+                    loadRatings(); 
+
+                    const msgElem = document.getElementById('feedback-success-msg');
+                    msgElem.style.display = 'block';
+                    setTimeout(() => {
+                        msgElem.style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert("送信に失敗しました。");
+                }
+            } catch (err) {
+                console.error('[SUBMIT ERROR]', err);
+                alert("通信エラーが発生しました。");
+            }
+        }
+
+        // --- エージェント選択処理 (クリック時に右チャットパネルを表示) ---
+        function selectAgent(key) {
+            currentAgentKey = key;
+            const agent = agentMap[key];
+
+            // チャットパネルを表示
+            const chatPanel = document.getElementById('chat-panel');
+            chatPanel.style.display = 'flex';
+
+            document.getElementById('current-agent-title').innerText = agent.name;
+
+            // 評価済みチェック
+            checkUserRatingState(key);
+
+            const iframe = document.getElementById('copilot-iframe');
+            const placeholder = document.getElementById('mock-placeholder');
+
+            if (agent.url && agent.url !== '') {
+                iframe.src = agent.url;
+                iframe.style.display = 'block';
+                placeholder.style.display = 'none';
+            } else {
+                iframe.style.display = 'none';
+                placeholder.style.display = 'flex';
+
+                const msgBox = document.getElementById('chat-messages');
+                msgBox.innerHTML = `
+                    <div class="chat-msg bot">
+                        こんにちは！<b>${agent.name}</b>です。<br>
+                        下の入力欄からメッセージを入力してください。
+                    </div>
+                `;
+            }
+
+            // カードのアクティブ枠線強調
+            document.querySelectorAll('.agent-card').forEach(card => {
+                if (card.getAttribute('data-key') === key) {
+                    card.style.borderColor = 'var(--primary-color)';
+                    card.style.boxShadow = '0 0 0 2px rgba(0, 120, 212, 0.2)';
+                } else {
+                    card.style.borderColor = 'var(--border-color)';
+                    card.style.boxShadow = 'none';
+                }
+            });
+
+            // ★ Azure (Cosmos DB) へ利用ログを送信
+            logUsage(key, agent.name);
+        }
+
+        // --- チャットパネルを閉じる処理 ---
+        function closeChat() {
+            document.getElementById('chat-panel').style.display = 'none';
+            currentAgentKey = null;
+
+            document.querySelectorAll('.agent-card').forEach(card => {
+                card.style.borderColor = 'var(--border-color)';
+                card.style.boxShadow = 'none';
+            });
+        }
+
+        // --- 利用ログ送信関数 (Azure Cosmos DB) ---
+        function logUsage(agentId, agentName) {
+            fetch('/api/log', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    agentId: agentId,
+                    agentName: agentName
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log(`[LOG SUCCESS] ${agentName} の利用ログを記録しました。`);
+                } else {
+                    console.error('[LOG ERROR] ログの送信に失敗しました。');
+                }
+            })
+            .catch(err => console.error('[LOG NETWORK ERROR]', err));
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const msgBox = document.getElementById('chat-messages');
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-msg user';
+            userMsg.innerText = text;
+            msgBox.appendChild(userMsg);
+            input.value = '';
+            msgBox.scrollTop = msgBox.scrollHeight;
+
+            setTimeout(() => {
+                const botMsg = document.createElement('div');
+                botMsg.className = 'chat-msg bot';
+                botMsg.innerText = `「${text}」を受信しました。`;
+                msgBox.appendChild(botMsg);
+                msgBox.scrollTop = msgBox.scrollHeight;
+            }, 600);
+        }
+
+        function reloadAgent() {
+            if (currentAgentKey) {
+                selectAgent(currentAgentKey);
+            }
+        }
+
+        window.onload = function() {
+            renderCards();
+            loadRatings();
+        };
+    </script>
 </body>
 </html>
