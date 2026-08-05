@@ -19,8 +19,39 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', 'Helvetica Neue', sans-serif; }
         body { display: flex; height: 100vh; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; }
 
-        /* 左サイドバー（幅狭 180px） */
-        .sidebar { width: 200px; background-color: var(--sidebar-bg); color: #abb2bf; padding: 12px 8px; display: flex; flex-direction: column; gap: 15px; font-size: 12px; flex-shrink: 0; overflow-y: auto; }
+        /* スマホ用ヘッダー & オーバーレイ */
+        .mobile-header {
+            display: none;
+            height: 48px;
+            background-color: var(--sidebar-bg);
+            color: #ffffff;
+            align-items: center;
+            padding: 0 15px;
+            font-size: 14px;
+            font-weight: bold;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            gap: 12px;
+        }
+        .mobile-menu-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 89;
+        }
+
+        /* 左サイドバー（幅狭 200px） */
+        .sidebar { width: 200px; background-color: var(--sidebar-bg); color: #abb2bf; padding: 12px 8px; display: flex; flex-direction: column; gap: 15px; font-size: 12px; flex-shrink: 0; overflow-y: auto; transition: transform 0.3s ease; }
         .sidebar-title { color: #fff; font-weight: bold; font-size: 13px; padding: 4px 6px; display: flex; align-items: center; gap: 6px; }
         .sidebar-section { display: flex; flex-direction: column; gap: 2px; }
         .sidebar-label { font-size: 10px; text-transform: uppercase; color: #5c6370; padding: 4px 6px; font-weight: bold; }
@@ -30,14 +61,14 @@
         /* メインエリア */
         .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-        header { height: 50px; background-color: #2b323b; color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 13px; }
+        header { height: 50px; background-color: #2b323b; color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 13px; flex-shrink: 0; }
         .search-bar { display: flex; align-items: center; background: #3b424d; padding: 4px 12px; border-radius: 4px; width: 360px; }
         .search-bar input { background: transparent; border: none; color: white; outline: none; margin-left: 8px; width: 100%; font-size: 12px; }
         .header-actions { display: flex; align-items: center; gap: 15px; }
         .btn-add-req { background-color: #e81123; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; }
         .user-avatar { width: 28px; height: 28px; background: #0078d4; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
 
-        .content-body { flex: 1; display: flex; overflow: hidden; }
+        .content-body { flex: 1; display: flex; overflow: hidden; position: relative; }
 
         /* 中央ポータルエリア */
         .portal-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; transition: all 0.2s ease; }
@@ -78,14 +109,14 @@
         .empty-pinned-msg { display: none; text-align: center; padding: 40px 20px; color: var(--text-sub); font-size: 13px; border: 2px dashed var(--border-color); border-radius: 8px; background: #fafafa; }
 
         /* コメントダッシュボードスタイル */
-        .comments-table-container { display: none; background: white; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .comments-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+        .comments-table-container { display: none; background: white; border: 1px solid var(--border-color); border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .comments-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; min-width: 500px; }
         .comments-table th { background: #faf9f8; padding: 10px 12px; border-bottom: 1px solid var(--border-color); font-weight: bold; color: var(--text-sub); }
         .comments-table td { padding: 10px 12px; border-bottom: 1px solid #f3f2f1; vertical-align: top; }
         .comments-table tr:hover { background-color: #fafafa; }
         .badge-agent { background: #eef6ff; color: var(--primary-color); font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
 
-        /* 右側チャットパネル（初期状態は display: none） */
+        /* 右側チャットパネル */
         .chat-panel { width: 380px; background: white; border-left: 1px solid var(--border-color); display: none; flex-direction: column; flex-shrink: 0; }
         .chat-header { padding: 12px 15px; border-bottom: 1px solid var(--border-color); background: #faf9f8; display: flex; justify-content: space-between; align-items: center; height: 46px; }
         .chat-agent-info { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 13px; }
@@ -103,7 +134,7 @@
         .chat-msg.user { background: #0078d4; color: white; align-self: flex-end; }
         
         .chat-input-area { padding: 10px 12px; border-top: 1px solid var(--border-color); background: #fff; display: flex; gap: 8px; }
-        .chat-input-area input { flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; font-size: 12px; }
+        .chat-input-area input { flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; font-size: 14px; }
         .btn-send { background: var(--primary-color); color: white; border: none; padding: 0 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
 
         /* 評価＆改善要望フィードバックエリア */
@@ -111,17 +142,61 @@
         .star-rating-input { display: flex; gap: 6px; margin: 4px 0; }
         .star-rating-input span { font-size: 18px; color: #ccc; cursor: pointer; transition: color 0.15s; }
         .star-rating-input span:hover { color: var(--star-color); }
-        .feedback-textarea { width: 100%; height: 48px; margin-top: 6px; padding: 6px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 4px; resize: none; outline: none; font-family: inherit; }
+        .feedback-textarea { width: 100%; height: 48px; margin-top: 6px; padding: 6px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 4px; resize: none; outline: none; font-family: inherit; }
         .feedback-textarea:focus { border-color: var(--primary-color); }
         .btn-submit-feedback { width: 100%; margin-top: 6px; padding: 6px; background: var(--primary-color); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-submit-feedback:hover { background-color: #005a9e; }
         .feedback-done-msg { display: none; color: #137333; font-size: 11px; margin-top: 4px; background: #e6f4ea; padding: 6px; border-radius: 4px; text-align: center; font-weight: bold; }
+
+        /* ---------------------------------- */
+        /* スマートフォン向けレスポンシブ設定 (<= 768px) */
+        /* ---------------------------------- */
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow: hidden; }
+            .mobile-header { display: flex; }
+            .mobile-overlay.active { display: block; }
+            
+            .sidebar {
+                position: fixed;
+                top: 48px; left: 0; bottom: 0;
+                width: 220px;
+                z-index: 90;
+                transform: translateX(-100%);
+                box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+            }
+            .sidebar.open { transform: translateX(0); }
+
+            .main-wrapper { margin-top: 48px; height: calc(100vh - 48px); }
+            header {
+                flex-direction: column;
+                height: auto;
+                padding: 10px 15px;
+                gap: 8px;
+            }
+            .search-bar { width: 100%; }
+            .header-actions { width: 100%; justify-content: space-between; }
+            .recommend-section { flex-direction: column; }
+
+            .chat-panel {
+                position: fixed;
+                top: 48px; left: 0; right: 0; bottom: 0;
+                width: 100% !important;
+                z-index: 95;
+            }
+        }
     </style>
 </head>
 <body>
 
+    <!-- モバイル用上部バー -->
+    <div class="mobile-header">
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+        <span>⚡ Generative AI Portal</span>
+    </div>
+    <div class="mobile-overlay" id="mobile-overlay" onclick="toggleMobileMenu()"></div>
+
     <!-- 左ナビゲーション -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-title">⚡ Generative AI Portal</div>
         
         <div class="sidebar-section">
@@ -398,8 +473,22 @@
         let pinnedKeys = JSON.parse(localStorage.getItem('pinned_agents') || '["nyuuryoku_totsugou"]');
         let selectedRatingValue = 0;
 
+        // モバイル用メニューの開閉処理
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
         function switchPage(page) {
             currentPage = page;
+
+            // モバイルメニュー開いている場合は閉じる
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('mobile-overlay').classList.remove('active');
+            }
 
             document.getElementById('nav-home').classList.remove('active');
             document.getElementById('nav-pinned').classList.remove('active');
