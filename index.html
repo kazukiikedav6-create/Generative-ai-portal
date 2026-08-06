@@ -50,7 +50,7 @@
             z-index: 89;
         }
 
-        /* 左サイドバー（幅狭 200px） */
+        /* 左サイドバー */
         .sidebar { width: 200px; background-color: var(--sidebar-bg); color: #abb2bf; padding: 12px 8px; display: flex; flex-direction: column; gap: 15px; font-size: 12px; flex-shrink: 0; overflow-y: auto; transition: transform 0.3s ease; }
         .sidebar-title { color: #fff; font-weight: bold; font-size: 13px; padding: 4px 6px; display: flex; align-items: center; gap: 6px; }
         .sidebar-section { display: flex; flex-direction: column; gap: 2px; }
@@ -66,16 +66,20 @@
         .search-bar input { background: transparent; border: none; color: white; outline: none; margin-left: 8px; width: 100%; font-size: 12px; }
         .header-actions { display: flex; align-items: center; gap: 15px; }
         .btn-add-req { background-color: #e81123; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; }
-        .user-avatar { width: 28px; height: 28px; background: #0078d4; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
+        
+        /* Entra ID ユーザー表示エリア */
+        .user-container { display: flex; align-items: center; gap: 8px; }
+        .user-avatar { width: 28px; height: 28px; background: #0078d4; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; cursor: pointer; user-select: none; }
+        .user-name { font-size: 11px; color: #d1d5db; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         .content-body { flex: 1; display: flex; overflow: hidden; position: relative; }
 
-        /* 中央ポータルエリア */
+        /* ポータルメインエリア */
         .portal-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; transition: all 0.2s ease; }
         .welcome-title h2 { font-size: 18px; margin-bottom: 4px; }
         .welcome-title p { font-size: 12px; color: var(--text-sub); }
 
-        /* おすすめセクション */
+        /* おすすめエリア */
         .recommend-section { display: flex; gap: 15px; }
         .recommend-card { flex: 1; background: #fff3e6; border: 1px solid #ffd8b3; border-radius: 6px; padding: 12px 15px; font-size: 12px; position: relative; }
         .recommend-tag { position: absolute; top: -8px; left: 12px; background: #ff6b00; color: white; font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: bold; }
@@ -94,7 +98,6 @@
         .agent-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .badge-live { background: #e6f4ea; color: #137333; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; width: fit-content; }
         
-        /* ピン留めボタン */
         .pin-btn { background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.25; transition: 0.2s; padding: 2px; border-radius: 4px; }
         .pin-btn:hover { opacity: 0.8; background: #f0f0f0; }
         .pin-btn.active { opacity: 1; filter: drop-shadow(0 0 2px rgba(255,165,0,0.8)); }
@@ -105,7 +108,6 @@
         .agent-rating-badge { font-size: 11px; color: var(--star-color); font-weight: 500; }
         .btn-use { background: var(--primary-color); color: white; border: none; padding: 5px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; }
 
-        /* ピン留め件数0のメッセージ */
         .empty-pinned-msg { display: none; text-align: center; padding: 40px 20px; color: var(--text-sub); font-size: 13px; border: 2px dashed var(--border-color); border-radius: 8px; background: #fafafa; }
 
         /* コメントダッシュボードスタイル */
@@ -127,7 +129,6 @@
         .chat-iframe-container { flex: 1; width: 100%; background: #fcfcfc; position: relative; display: flex; flex-direction: column; overflow: hidden; }
         .chat-iframe-container iframe { width: 100%; height: 100%; border: none; }
 
-        /* テスト用簡易チャット表示エリア */
         .chat-messages-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 12px; }
         .chat-msg { padding: 8px 12px; border-radius: 8px; max-width: 85%; line-height: 1.4; }
         .chat-msg.bot { background: #eef6ff; align-self: flex-start; color: #1e252b; }
@@ -137,7 +138,7 @@
         .chat-input-area input { flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; font-size: 14px; }
         .btn-send { background: var(--primary-color); color: white; border: none; padding: 0 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
 
-        /* 評価＆改善要望フィードバックエリア */
+        /* 評価＆フィードバック */
         .feedback-box { padding: 12px 15px; border-top: 1px solid var(--border-color); background: #faf9f8; font-size: 11px; }
         .star-rating-input { display: flex; gap: 6px; margin: 4px 0; }
         .star-rating-input span { font-size: 18px; color: #ccc; cursor: pointer; transition: color 0.15s; }
@@ -148,54 +149,29 @@
         .btn-submit-feedback:hover { background-color: #005a9e; }
         .feedback-done-msg { display: none; color: #137333; font-size: 11px; margin-top: 4px; background: #e6f4ea; padding: 6px; border-radius: 4px; text-align: center; font-weight: bold; }
 
-        /* ---------------------------------- */
-        /* スマートフォン向けレスポンシブ設定 (<= 768px) */
-        /* ---------------------------------- */
         @media (max-width: 768px) {
             body { flex-direction: column; overflow: hidden; }
             .mobile-header { display: flex; }
             .mobile-overlay.active { display: block; }
-            
-            .sidebar {
-                position: fixed;
-                top: 48px; left: 0; bottom: 0;
-                width: 220px;
-                z-index: 90;
-                transform: translateX(-100%);
-                box-shadow: 2px 0 8px rgba(0,0,0,0.3);
-            }
+            .sidebar { position: fixed; top: 48px; left: 0; bottom: 0; width: 220px; z-index: 90; transform: translateX(-100%); box-shadow: 2px 0 8px rgba(0,0,0,0.3); }
             .sidebar.open { transform: translateX(0); }
-
             .main-wrapper { margin-top: 48px; height: calc(100vh - 48px); }
-            header {
-                flex-direction: column;
-                height: auto;
-                padding: 10px 15px;
-                gap: 8px;
-            }
+            header { flex-direction: column; height: auto; padding: 10px 15px; gap: 8px; }
             .search-bar { width: 100%; }
             .header-actions { width: 100%; justify-content: space-between; }
             .recommend-section { flex-direction: column; }
-
-            .chat-panel {
-                position: fixed;
-                top: 48px; left: 0; right: 0; bottom: 0;
-                width: 100% !important;
-                z-index: 95;
-            }
+            .chat-panel { position: fixed; top: 48px; left: 0; right: 0; bottom: 0; width: 100% !important; z-index: 95; }
         }
     </style>
 </head>
 <body>
 
-    <!-- モバイル用上部バー -->
     <div class="mobile-header">
         <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
         <span>⚡ Generative AI Portal</span>
     </div>
     <div class="mobile-overlay" id="mobile-overlay" onclick="toggleMobileMenu()"></div>
 
-    <!-- 左ナビゲーション -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-title">⚡ Generative AI Portal</div>
         
@@ -226,7 +202,6 @@
         </div>
     </div>
 
-    <!-- メインエリア -->
     <div class="main-wrapper">
         <header>
             <div class="search-bar">
@@ -234,19 +209,20 @@
             </div>
             <div class="header-actions">
                 <button class="btn-add-req">＋ 新規AI要望</button>
-                <div class="user-avatar">DU</div>
+                <div class="user-container">
+                    <span class="user-name" id="user-display-name">Guest</span>
+                    <div class="user-avatar" id="user-avatar" title="Entra ID ユーザー">DU</div>
+                </div>
             </div>
         </header>
 
         <div class="content-body">
-            <!-- 中央ポータルエリア -->
             <div class="portal-area">
                 <div class="welcome-title">
                     <h2 id="view-title">こんにちは、何から始めますか？</h2>
                     <p id="view-desc">業務エージェントをワンクリックで起動。そのまま右側で対話できます。</p>
                 </div>
 
-                <!-- おすすめエリア -->
                 <div class="recommend-section" id="recommend-section">
                     <div class="recommend-card">
                         <span class="recommend-tag">最近追加されたエージェント</span>
@@ -260,7 +236,6 @@
                     </div>
                 </div>
 
-                <!-- カテゴリタブ -->
                 <div class="category-tabs" id="category-tabs">
                     <button class="tab-item active">すべて</button>
                     <button class="tab-item">財務</button>
@@ -271,15 +246,12 @@
                     <button class="tab-item">データ/Excel</button>
                 </div>
 
-                <!-- ピン留め0件時のメッセージ -->
                 <div id="empty-pinned-msg" class="empty-pinned-msg">
                     📌 ピン留めされたエージェントはまだありません。<br>
                     カードの右上にある 📌 ボタンを押すと、よく使うエージェントとしてここに登録されます。
                 </div>
 
-                <!-- エージェントカード一覧 -->
                 <div class="agent-grid" id="agent-grid">
-                    <!-- 1. 入票突合エージェント (Copilot Studio 埋め込み済み) -->
                     <div class="agent-card" data-key="nyuuryoku_totsugou" style="border-color: #0078d4;">
                         <div>
                             <div class="agent-card-header">
@@ -295,7 +267,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. 社内AIチャット (汎用) -->
                     <div class="agent-card" data-key="general">
                         <div>
                             <div class="agent-card-header">
@@ -311,7 +282,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. 英文メール：丁寧度 -->
                     <div class="agent-card" data-key="english_mail">
                         <div>
                             <div class="agent-card-header">
@@ -327,7 +297,6 @@
                         </div>
                     </div>
 
-                    <!-- 4. 業務文書ブラッシュアップ -->
                     <div class="agent-card" data-key="doc_polish">
                         <div>
                             <div class="agent-card-header">
@@ -343,7 +312,6 @@
                         </div>
                     </div>
 
-                    <!-- 5. Excel 条件抽出の式を提案 -->
                     <div class="agent-card" data-key="excel_formula">
                         <div>
                             <div class="agent-card-header">
@@ -359,7 +327,6 @@
                         </div>
                     </div>
 
-                    <!-- 6. 財務FAQ (社内ルール) -->
                     <div class="agent-card" data-key="finance_faq">
                         <div>
                             <div class="agent-card-header">
@@ -376,7 +343,6 @@
                     </div>
                 </div>
 
-                <!-- コメント確認ダッシュボード一覧エリア -->
                 <div id="comments-container" class="comments-table-container">
                     <table class="comments-table">
                         <thead>
@@ -397,7 +363,6 @@
 
             </div>
 
-            <!-- 右側：チャット＆ログ収集パネル -->
             <div class="chat-panel" id="chat-panel">
                 <div class="chat-header">
                     <div class="chat-agent-info">
@@ -410,10 +375,8 @@
                 </div>
 
                 <div class="chat-iframe-container">
-                    <!-- Copilot Studio 用 iframe 枠 -->
                     <iframe id="copilot-iframe" src="" style="display:none;"></iframe>
 
-                    <!-- モック対話エリア（URLが無いエージェント用） -->
                     <div id="mock-placeholder" style="display:none; flex-direction:column; height:100%;">
                         <div id="chat-messages" class="chat-messages-box"></div>
                         <div class="chat-input-area">
@@ -423,11 +386,9 @@
                     </div>
                 </div>
 
-                <!-- 評価＆改善要望エリア -->
                 <div class="feedback-box">
                     <h4 style="font-size:12px; margin-bottom:2px;">💬 評価・改善要望</h4>
                     
-                    <!-- 星評価セクション -->
                     <div id="star-rating-section">
                         <p style="color: #605e5c; font-size: 10.5px;" id="star-instruction">星を選択してください（1人1回）：</p>
                         <div class="star-rating-input" id="star-input-group">
@@ -442,7 +403,6 @@
                         </div>
                     </div>
 
-                    <!-- 改善要望入力エリア（何回でも送信可） -->
                     <textarea id="feedback-comment" class="feedback-textarea" placeholder="改善要望やメッセージを入力してください（何回でも送信可）"></textarea>
                     <button class="btn-submit-feedback" onclick="submitFeedback()">送信する</button>
                     
@@ -455,7 +415,6 @@
     </div>
 
     <script>
-        // ★ エージェントマップ（入票突合エージェントの URL 埋め込み済み）
         const agentMap = {
             'nyuuryoku_totsugou': { 
                 name: '入票突合エージェント', 
@@ -472,8 +431,44 @@
         let currentPage = 'home';
         let pinnedKeys = JSON.parse(localStorage.getItem('pinned_agents') || '["nyuuryoku_totsugou"]');
         let selectedRatingValue = 0;
+        let currentUserInfo = null; // ★ Entra ID ユーザー情報を保持
 
-        // モバイル用メニューの開閉処理
+        // ★ [ステップ④の実装] Entra ID ユーザープロファイルの取得関数
+        async function loadUserProfile() {
+            try {
+                const response = await fetch('/.auth/me');
+                if (!response.ok) return;
+
+                const payload = await response.json();
+                const { clientPrincipal } = payload;
+
+                if (clientPrincipal) {
+                    currentUserInfo = clientPrincipal;
+                    const userEmailOrName = clientPrincipal.userDetails;
+
+                    const nameElem = document.getElementById('user-display-name');
+                    const avatarElem = document.getElementById('user-avatar');
+
+                    if (nameElem) nameElem.innerText = userEmailOrName;
+                    if (avatarElem) {
+                        const initial = userEmailOrName.substring(0, 2).toUpperCase();
+                        avatarElem.innerText = initial;
+                        avatarElem.title = `${userEmailOrName}\n(クリックでログアウト)`;
+                        avatarElem.onclick = logout;
+                    }
+                }
+            } catch (err) {
+                console.warn('[AUTH INFO] 認証情報の取得スキップ（ローカル開発等）:', err);
+            }
+        }
+
+        // ★ [ステップ④の実装] ログアウト処理
+        function logout() {
+            if (confirm('ポータルからログアウトしますか？')) {
+                window.location.href = '/.auth/logout';
+            }
+        }
+
         function toggleMobileMenu() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
@@ -484,7 +479,6 @@
         function switchPage(page) {
             currentPage = page;
 
-            // モバイルメニュー開いている場合は閉じる
             if (window.innerWidth <= 768) {
                 document.getElementById('sidebar').classList.remove('open');
                 document.getElementById('mobile-overlay').classList.remove('active');
@@ -521,13 +515,12 @@
                 document.getElementById('category-tabs').style.display = 'none';
                 agentGrid.style.display = 'none';
                 commentsContainer.style.display = 'block';
-                loadAdminComments(); // コメント取得実行
+                loadAdminComments();
             }
 
             renderCards();
         }
 
-        // --- 管理者ダッシュボード：改善要望コメント一覧の取得・描画 ---
         async function loadAdminComments() {
             const tbody = document.getElementById('comments-table-body');
             tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">データを読み込んでいます...</td></tr>';
@@ -615,7 +608,6 @@
             }
         }
 
-        // --- 全エージェントの評価データをDBから取得して画面表示を更新 ---
         async function loadRatings() {
             try {
                 const response = await fetch('/api/ratings');
@@ -638,7 +630,6 @@
             }
         }
 
-        // --- 星の選択表示コントロール ---
         function setRating(val) {
             selectedRatingValue = val;
             const stars = document.querySelectorAll('#star-input-group span');
@@ -651,7 +642,6 @@
             });
         }
 
-        // --- ユーザーの評価済み状態をチェック ---
         function checkUserRatingState(agentId) {
             const savedRating = localStorage.getItem(`rated_${agentId}`);
             const starInstruction = document.getElementById('star-instruction');
@@ -673,7 +663,6 @@
             document.getElementById('feedback-success-msg').style.display = 'none';
         }
 
-        // --- 評価および改善要望の送信処理 ---
         async function submitFeedback() {
             if (!currentAgentKey) return;
             
@@ -690,9 +679,11 @@
                 return;
             }
 
+            // ★ ログイン中のユーザー情報を送信データへ追加
             const payload = {
                 agentId: currentAgentKey,
-                comment: commentText
+                comment: commentText,
+                userId: currentUserInfo ? currentUserInfo.userDetails : 'anonymous'
             };
 
             if (!savedRating && selectedRatingValue > 0) {
@@ -728,18 +719,15 @@
             }
         }
 
-        // --- エージェント選択処理 (クリック時に右チャットパネルを表示) ---
         function selectAgent(key) {
             currentAgentKey = key;
             const agent = agentMap[key];
 
-            // チャットパネルを表示
             const chatPanel = document.getElementById('chat-panel');
             chatPanel.style.display = 'flex';
 
             document.getElementById('current-agent-title').innerText = agent.name;
 
-            // 評価済みチェック
             checkUserRatingState(key);
 
             const iframe = document.getElementById('copilot-iframe');
@@ -762,7 +750,6 @@
                 `;
             }
 
-            // カードのアクティブ枠線強調
             document.querySelectorAll('.agent-card').forEach(card => {
                 if (card.getAttribute('data-key') === key) {
                     card.style.borderColor = 'var(--primary-color)';
@@ -773,11 +760,9 @@
                 }
             });
 
-            // ★ Azure (Cosmos DB) へ利用ログを送信
             logUsage(key, agent.name);
         }
 
-        // --- チャットパネルを閉じる処理 ---
         function closeChat() {
             document.getElementById('chat-panel').style.display = 'none';
             currentAgentKey = null;
@@ -788,16 +773,15 @@
             });
         }
 
-        // --- 利用ログ送信関数 (Azure Cosmos DB) ---
         function logUsage(agentId, agentName) {
+            // ★ ログイン中のユーザー情報をログデータへ追加
             fetch('/api/log', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     agentId: agentId,
-                    agentName: agentName
+                    agentName: agentName,
+                    userId: currentUserInfo ? currentUserInfo.userDetails : 'anonymous'
                 })
             })
             .then(response => {
@@ -839,6 +823,7 @@
         }
 
         window.onload = function() {
+            loadUserProfile(); // ★ ページ表示時に Entra ID 情報を取得
             renderCards();
             loadRatings();
         };
